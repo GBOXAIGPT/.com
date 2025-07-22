@@ -3,37 +3,66 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GBOX AI GPT - Advanced Chatbot</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.3/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        body {
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            height: 100%;
+            width: 100%;
             font-family: 'Poppins', sans-serif;
             background-color: #ffffff;
             color: #000000;
+            overflow: hidden;
         }
         .chat-window {
-            max-width: 600px;
-            margin: 0 auto;
-            height: 80vh;
-            padding: 20px;
+            width: 100%;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
             position: relative;
         }
         .chat-header {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            background-color: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
             gap: 10px;
-            margin-bottom: 20px;
+        }
+        .header-right {
+            display: flex;
+            gap: 10px;
+        }
+        .header-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #000000;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .header-button:hover {
+            background-color: #f0f0f0;
         }
         .profile-pic {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid #000000;
@@ -43,14 +72,13 @@
             background: linear-gradient(135deg, #000000 0%, #333333 100%);
             color: white;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 10px;
             text-align: center;
             line-height: 1.1;
             padding: 2px;
-            box-sizing: border-box;
         }
         .chat-title {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: bold;
             color: #000000;
         }
@@ -58,88 +86,94 @@
             flex-grow: 1;
             overflow-y: auto;
             padding: 10px;
-            margin-bottom: 1rem;
+            background-color: #f9f9f9;
         }
         .message {
-            margin-bottom: 0.5rem;
-            padding: 10px;
-            border-radius: 5px;
-            background-color: #ffffff;
-            transition: background-color 0.2s ease;
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            max-width: 85%;
+            word-wrap: break-word;
         }
         .message.user-message {
-            background-color: #f0f0f0;
+            background-color: #000000;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 0;
+        }
+        .message.bot-message {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            margin-right: auto;
+            border-bottom-left-radius: 0;
         }
         .input-container {
             display: flex;
+            padding: 10px;
+            background-color: #ffffff;
             border-top: 1px solid #e0e0e0;
-            padding-top: 10px;
-            align-items: center;
+            position: sticky;
+            bottom: 0;
         }
         .input-field {
             flex-grow: 1;
-            padding: 10px;
-            margin-right: 10px;
-            border-radius: 5px;
+            padding: 12px;
+            border-radius: 20px;
             border: 1px solid #e0e0e0;
-            transition: background-color 0.2s ease;
-            color: #000;
-        }
-        .input-field:focus {
             outline: none;
-            background-color: #ffffff;
+            font-size: 16px;
         }
         .send-button {
-            padding: 10px 20px;
+            margin-left: 10px;
+            padding: 12px 15px;
             background-color: #000000;
             border: none;
-            border-radius: 5px;
+            border-radius: 50%;
             color: #ffffff;
             cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .send-button:hover {
-            background-color: #333333;
-        }
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #ffffff;
-            animation: spin 1s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .select-type {
             margin-right: 10px;
             padding: 10px;
             border-radius: 5px;
             border: 1px solid #e0e0e0;
+            background-color: white;
         }
         .generated-image {
             max-width: 100%;
-            border-radius: 5px;
+            border-radius: 8px;
             margin-top: 5px;
         }
         .backup-buttons {
             display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 8px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-top: 1px solid #e0e0e0;
         }
         .backup-button {
-            padding: 8px 15px;
-            background-color: #f0f0f0;
+            flex: 1;
+            padding: 10px;
+            background-color: #ffffff;
             border: 1px solid #e0e0e0;
             border-radius: 5px;
             cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .backup-button:hover {
-            background-color: #e0e0e0;
+            text-align: center;
+            font-size: 14px;
         }
         .typing-indicator {
             display: flex;
-            padding: 10px;
+            padding: 12px;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            max-width: 85%;
+            margin-right: auto;
+            margin-bottom: 10px;
+            border-bottom-left-radius: 0;
         }
         .typing-dot {
             width: 8px;
@@ -168,10 +202,80 @@
                 transform: translateY(-5px);
             }
         }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+        .history-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            color: white;
+            overflow-y: auto;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .history-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .close-history {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .history-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .history-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .history-item:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .history-item-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .history-item-preview {
+            font-size: 14px;
+            color: #ccc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .history-item-date {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        .new-chat-button {
+            background-color: #000000;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -179,8 +283,14 @@
 <body>
     <div class="chat-window">
         <div class="chat-header">
-            <div class="profile-pic">GBOX<br>AI<br>GPT</div>
-            <div class="chat-title">GBOX AI GPT</div>
+            <div class="header-left">
+                <div class="profile-pic">GBOX<br>AI<br>GPT</div>
+                <div class="chat-title">GBOX AI GPT</div>
+            </div>
+            <div class="header-right">
+                <button id="history-button" class="header-button">History</button>
+                <button id="new-chat-button" class="header-button">New Chat</button>
+            </div>
         </div>
         <div class="messages" id="messages">
             <!-- Messages will appear here -->
@@ -191,13 +301,30 @@
                 <option value="image">Image</option>
             </select>
             <input type="text" id="message-input" class="input-field" placeholder="Type a message..." />
-            <button id="send-button" class="send-button">Send</button>
+            <button id="send-button" class="send-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
         </div>
         <div class="backup-buttons">
-            <button id="save-chat" class="backup-button">Save Chat</button>
-            <button id="load-chat" class="backup-button">Load Chat</button>
-            <button id="clear-chat" class="backup-button">Clear Chat</button>
+            <button id="save-chat" class="backup-button">Save</button>
+            <button id="load-chat" class="backup-button">Load</button>
+            <button id="clear-chat" class="backup-button">Clear</button>
         </div>
+    </div>
+
+    <!-- History Panel -->
+    <div class="history-panel" id="history-panel">
+        <div class="history-header">
+            <div class="history-title">Chat History</div>
+            <button class="close-history" id="close-history">&times;</button>
+        </div>
+        <div class="history-list" id="history-list">
+            <!-- History items will appear here -->
+        </div>
+        <button class="new-chat-button" id="new-chat-from-history">Start New Chat</button>
     </div>
 
     <script>
@@ -208,6 +335,12 @@
         const saveChatButton = document.getElementById('save-chat');
         const loadChatButton = document.getElementById('load-chat');
         const clearChatButton = document.getElementById('clear-chat');
+        const historyButton = document.getElementById('history-button');
+        const newChatButton = document.getElementById('new-chat-button');
+        const historyPanel = document.getElementById('history-panel');
+        const closeHistoryButton = document.getElementById('close-history');
+        const historyList = document.getElementById('history-list');
+        const newChatFromHistoryButton = document.getElementById('new-chat-from-history');
 
         // Welcome message
         window.onload = function() {
@@ -218,13 +351,16 @@
 
         // Chat history array to store all messages
         let chatHistory = [];
+        // Store all saved chats
+        let savedChats = JSON.parse(localStorage.getItem('gboxAiGptSavedChats') || '[]');
+        // Current chat ID
+        let currentChatId = Date.now().toString();
 
         function appendMessage(message, isUser = false, isError = false, isImage = false) {
             const messageElement = document.createElement('div');
             messageElement.classList.add('message', isUser ? 'user-message' : 'bot-message');
             if (isError) {
-                messageElement.style.backgroundColor = '#ff4c4c';
-                messageElement.style.color = 'white';
+                messageElement.classList.add('error-message');
             }
             
             if (isImage) {
@@ -248,6 +384,9 @@
                 isImage,
                 timestamp: new Date().toISOString()
             });
+            
+            // Update current chat in saved chats
+            updateCurrentChatInSavedChats();
         }
 
         function appendImage(imageUrl) {
@@ -256,7 +395,7 @@
 
         function showTypingIndicator() {
             const typingElement = document.createElement('div');
-            typingElement.classList.add('typing-indicator', 'message');
+            typingElement.classList.add('typing-indicator');
             
             for (let i = 0; i < 3; i++) {
                 const dot = document.createElement('div');
@@ -269,10 +408,32 @@
             return typingElement;
         }
 
-        // Backup functions
+        // Chat management functions
+        function updateCurrentChatInSavedChats() {
+            const existingChatIndex = savedChats.findIndex(chat => chat.id === currentChatId);
+            
+            if (chatHistory.length > 0) {
+                const chatData = {
+                    id: currentChatId,
+                    title: chatHistory[0].content.substring(0, 30) + (chatHistory[0].content.length > 30 ? '...' : ''),
+                    preview: chatHistory.length > 1 ? chatHistory[1].content.substring(0, 50) + (chatHistory[1].content.length > 50 ? '...' : '') : '',
+                    date: new Date().toISOString(),
+                    messages: [...chatHistory]
+                };
+                
+                if (existingChatIndex !== -1) {
+                    savedChats[existingChatIndex] = chatData;
+                } else {
+                    savedChats.push(chatData);
+                }
+                
+                localStorage.setItem('gboxAiGptSavedChats', JSON.stringify(savedChats));
+            }
+        }
+
         function saveChatToLocalStorage() {
             try {
-                localStorage.setItem('gboxAiGptChatHistory', JSON.stringify(chatHistory));
+                updateCurrentChatInSavedChats();
                 appendMessage("Chat saved successfully!", false, false);
                 console.log("Chat saved to localStorage");
             } catch (e) {
@@ -283,24 +444,19 @@
 
         function loadChatFromLocalStorage() {
             try {
-                const savedChat = localStorage.getItem('gboxAiGptChatHistory');
-                if (savedChat) {
-                    const parsedChat = JSON.parse(savedChat);
-                    // Clear current chat
-                    messagesContainer.innerHTML = '';
-                    chatHistory = [];
-                    
-                    // Rebuild chat from saved data
-                    parsedChat.forEach(msg => {
-                        if (msg.isImage) {
-                            appendImage(msg.content);
-                        } else {
-                            appendMessage(msg.content, msg.isUser, msg.isError);
-                        }
-                    });
-                    
-                    appendMessage("Previous chat loaded successfully!", false, false);
-                    console.log("Chat loaded from localStorage");
+                // Try to load the last active chat
+                const lastChatId = localStorage.getItem('gboxAiGptLastActiveChat');
+                if (lastChatId) {
+                    const chatToLoad = savedChats.find(chat => chat.id === lastChatId);
+                    if (chatToLoad) {
+                        loadChat(chatToLoad);
+                        return;
+                    }
+                }
+                
+                // If no last active chat, load the most recent one
+                if (savedChats.length > 0) {
+                    loadChat(savedChats[savedChats.length - 1]);
                 }
             } catch (e) {
                 appendMessage("Failed to load chat. The saved data may be corrupted.", false, true);
@@ -308,15 +464,88 @@
             }
         }
 
+        function loadChat(chatData) {
+            // Clear current chat
+            messagesContainer.innerHTML = '';
+            chatHistory = [];
+            currentChatId = chatData.id;
+            
+            // Rebuild chat from saved data
+            chatData.messages.forEach(msg => {
+                if (msg.isImage) {
+                    appendImage(msg.content);
+                } else {
+                    appendMessage(msg.content, msg.isUser, msg.isError);
+                }
+            });
+            
+            // Set as last active chat
+            localStorage.setItem('gboxAiGptLastActiveChat', chatData.id);
+            
+            appendMessage("Chat loaded successfully!", false, false);
+            console.log("Chat loaded from localStorage");
+        }
+
         function clearChat() {
             if (confirm("Are you sure you want to clear the chat history?")) {
                 messagesContainer.innerHTML = '';
                 chatHistory = [];
+                currentChatId = Date.now().toString();
                 appendMessage("Chat cleared. How can I assist you today?", false, false);
                 
-                // Also clear from localStorage
-                localStorage.removeItem('gboxAiGptChatHistory');
+                // Update saved chats
+                updateCurrentChatInSavedChats();
             }
+        }
+
+        function startNewChat() {
+            if (chatHistory.length > 0 && !confirm("Starting a new chat will save the current one. Continue?")) {
+                return;
+            }
+            
+            // Save current chat if it has messages
+            if (chatHistory.length > 0) {
+                updateCurrentChatInSavedChats();
+            }
+            
+            // Clear and start new chat
+            messagesContainer.innerHTML = '';
+            chatHistory = [];
+            currentChatId = Date.now().toString();
+            appendMessage("Hello! I'm GBOX AI GPT. How can I assist you today?", false, false);
+            
+            // Set as last active chat
+            localStorage.setItem('gboxAiGptLastActiveChat', currentChatId);
+        }
+
+        function showHistoryPanel() {
+            historyList.innerHTML = '';
+            
+            // Sort chats by date (newest first)
+            const sortedChats = [...savedChats].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (sortedChats.length === 0) {
+                historyList.innerHTML = '<div style="padding: 20px; text-align: center;">No saved chats yet</div>';
+            } else {
+                sortedChats.forEach(chat => {
+                    const historyItem = document.createElement('div');
+                    historyItem.classList.add('history-item');
+                    historyItem.innerHTML = `
+                        <div class="history-item-title">${chat.title}</div>
+                        <div class="history-item-preview">${chat.preview}</div>
+                        <div class="history-item-date">${new Date(chat.date).toLocaleString()}</div>
+                    `;
+                    
+                    historyItem.addEventListener('click', () => {
+                        loadChat(chat);
+                        historyPanel.style.display = 'none';
+                    });
+                    
+                    historyList.appendChild(historyItem);
+                });
+            }
+            
+            historyPanel.style.display = 'flex';
         }
 
         // Event listeners
@@ -393,6 +622,17 @@
         saveChatButton.addEventListener('click', saveChatToLocalStorage);
         loadChatButton.addEventListener('click', loadChatFromLocalStorage);
         clearChatButton.addEventListener('click', clearChat);
+        
+        // History and new chat buttons
+        historyButton.addEventListener('click', showHistoryPanel);
+        newChatButton.addEventListener('click', startNewChat);
+        newChatFromHistoryButton.addEventListener('click', () => {
+            startNewChat();
+            historyPanel.style.display = 'none';
+        });
+        closeHistoryButton.addEventListener('click', () => {
+            historyPanel.style.display = 'none';
+        });
     </script>
 </body>
 
