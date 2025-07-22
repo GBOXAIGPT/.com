@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GBOX AI GPT - Advanced Chatbot</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.3/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+        }
+        .chat-window {
+            max-width: 600px;
+            margin: 0 auto;
+            height: 80vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+            position: relative;
+        }
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .profile-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #000000 0%, #333333 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+            line-height: 1.1;
+            padding: 2px;
+            box-sizing: border-box;
+        }
+        .chat-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #000000;
+        }
+        .messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            margin-bottom: 1rem;
+        }
+        .message {
+            margin-bottom: 0.5rem;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #ffffff;
+            transition: background-color 0.2s ease;
+        }
+        .message.user-message {
+            background-color: #f0f0f0;
+        }
+        .input-container {
+            display: flex;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 10px;
+            align-items: center;
+        }
+        .input-field {
+            flex-grow: 1;
+            padding: 10px;
+            margin-right: 10px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+            transition: background-color 0.2s ease;
+            color: #000;
+        }
+        .input-field:focus {
+            outline: none;
+            background-color: #ffffff;
+        }
+        .send-button {
+            padding: 10px 20px;
+            background-color: #000000;
+            border: none;
+            border-radius: 5px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .send-button:hover {
+            background-color: #333333;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        .select-type {
+            margin-right: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+        .generated-image {
+            max-width: 100%;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+        .backup-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .backup-button {
+            padding: 8px 15px;
+            background-color: #f0f0f0;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .backup-button:hover {
+            background-color: #e0e0e0;
+        }
+        .typing-indicator {
+            display: flex;
+            padding: 10px;
+        }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #000;
+            border-radius: 50%;
+            margin: 0 2px;
+            opacity: 0.4;
+        }
+        .typing-dot:nth-child(1) {
+            animation: typingAnimation 1s infinite;
+        }
+        .typing-dot:nth-child(2) {
+            animation: typingAnimation 1s infinite 0.2s;
+        }
+        .typing-dot:nth-child(3) {
+            animation: typingAnimation 1s infinite 0.4s;
+        }
+        @keyframes typingAnimation {
+            0%, 100% {
+                opacity: 0.4;
+                transform: translateY(0);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-5px);
+            }
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chat-window">
+        <div class="chat-header">
+            <div class="profile-pic">GBOX<br>AI<br>GPT</div>
+            <div class="chat-title">GBOX AI GPT</div>
+        </div>
+        <div class="messages" id="messages">
+            <!-- Messages will appear here -->
+        </div>
+        <div class="input-container">
+            <select id="request-type" class="select-type">
+                <option value="text">Text</option>
+                <option value="image">Image</option>
+            </select>
+            <input type="text" id="message-input" class="input-field" placeholder="Type a message..." />
+            <button id="send-button" class="send-button">Send</button>
+        </div>
+        <div class="backup-buttons">
+            <button id="save-chat" class="backup-button">Save Chat</button>
+            <button id="load-chat" class="backup-button">Load Chat</button>
+            <button id="clear-chat" class="backup-button">Clear Chat</button>
+        </div>
+    </div>
+
+    <script>
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const requestType = document.getElementById('request-type');
+        const saveChatButton = document.getElementById('save-chat');
+        const loadChatButton = document.getElementById('load-chat');
+        const clearChatButton = document.getElementById('clear-chat');
+
+        // Welcome message
+        window.onload = function() {
+            appendMessage("Hello! I'm GBOX AI GPT. How can I assist you today?");
+            // Try to load saved chat if exists
+            loadChatFromLocalStorage();
+        };
+
+        // Chat history array to store all messages
+        let chatHistory = [];
+
+        function appendMessage(message, isUser = false, isError = false, isImage = false) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', isUser ? 'user-message' : 'bot-message');
+            if (isError) {
+                messageElement.style.backgroundColor = '#ff4c4c';
+                messageElement.style.color = 'white';
+            }
+            
+            if (isImage) {
+                const imageElement = document.createElement('img');
+                imageElement.src = message;
+                imageElement.alt = 'Generated Image';
+                imageElement.classList.add('generated-image');
+                messageElement.appendChild(imageElement);
+            } else {
+                messageElement.textContent = message;
+            }
+            
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Add to chat history
+            chatHistory.push({
+                content: message,
+                isUser,
+                isError,
+                isImage,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        function appendImage(imageUrl) {
+            appendMessage(imageUrl, false, false, true);
+        }
+
+        function showTypingIndicator() {
+            const typingElement = document.createElement('div');
+            typingElement.classList.add('typing-indicator', 'message');
+            
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('typing-dot');
+                typingElement.appendChild(dot);
+            }
+            
+            messagesContainer.appendChild(typingElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            return typingElement;
+        }
+
+        // Backup functions
+        function saveChatToLocalStorage() {
+            try {
+                localStorage.setItem('gboxAiGptChatHistory', JSON.stringify(chatHistory));
+                appendMessage("Chat saved successfully!", false, false);
+                console.log("Chat saved to localStorage");
+            } catch (e) {
+                appendMessage("Failed to save chat. Your browser may not support this feature.", false, true);
+                console.error("Error saving chat:", e);
+            }
+        }
+
+        function loadChatFromLocalStorage() {
+            try {
+                const savedChat = localStorage.getItem('gboxAiGptChatHistory');
+                if (savedChat) {
+                    const parsedChat = JSON.parse(savedChat);
+                    // Clear current chat
+                    messagesContainer.innerHTML = '';
+                    chatHistory = [];
+                    
+                    // Rebuild chat from saved data
+                    parsedChat.forEach(msg => {
+                        if (msg.isImage) {
+                            appendImage(msg.content);
+                        } else {
+                            appendMessage(msg.content, msg.isUser, msg.isError);
+                        }
+                    });
+                    
+                    appendMessage("Previous chat loaded successfully!", false, false);
+                    console.log("Chat loaded from localStorage");
+                }
+            } catch (e) {
+                appendMessage("Failed to load chat. The saved data may be corrupted.", false, true);
+                console.error("Error loading chat:", e);
+            }
+        }
+
+        function clearChat() {
+            if (confirm("Are you sure you want to clear the chat history?")) {
+                messagesContainer.innerHTML = '';
+                chatHistory = [];
+                appendMessage("Chat cleared. How can I assist you today?", false, false);
+                
+                // Also clear from localStorage
+                localStorage.removeItem('gboxAiGptChatHistory');
+            }
+        }
+
+        // Event listeners
+        sendButton.addEventListener('click', () => {
+            const userMessage = messageInput.value.trim();
+            if (userMessage) {
+                appendMessage(userMessage, true);
+                messageInput.value = '';
+
+                const typingIndicator = showTypingIndicator();
+                const payload = { prompt: userMessage };
+
+                if (requestType.value === 'text') {
+                    fetch("https://backend.buildpicoapps.com/aero/run/llm-api?pk=v1-Z0FBQUFBQm9lOEdKX3pVLU1rQmE2VUNWVTVNM2MzTmY5eTZPclhFNTlGbFJmdklPTk05OWx5RzN4MmtaN0JxQmdUdGUxLUJZWTdQRFdaNXNiYmFfTWo0S2dINUxpSndkbXc9PQ==", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        messagesContainer.removeChild(typingIndicator);
+                        if (data.status === 'success') {
+                            appendMessage(data.text);
+                        } else {
+                            appendMessage('AI response error. Please try again later.', false, true);
+                            console.error('API Error:', data);
+                        }
+                    })
+                    .catch(error => {
+                        messagesContainer.removeChild(typingIndicator);
+                        appendMessage('Network Error. Please try again later.', false, true);
+                        console.error('Network Error:', error);
+                    });
+                } else if (requestType.value === 'image') {
+                    fetch("https://backend.buildpicoapps.com/aero/run/image-generation-api?pk=v1-Z0FBQUFBQm9lOEcwWG5EYWFpMEExbl9zLWxGY2FlMTdnOUFzZU56aFpuWHp6b2lpak9LX0Q4UFpXVUJuenhhcmd0dGNpXzRhaUE1ekVRbzZBTnJaY08zWm1fQktUNTBHLUE9PQ==", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            prompt: userMessage,
+                            size: "512x512"
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        messagesContainer.removeChild(typingIndicator);
+                        if (data.status === 'success' && data.imageUrl) {
+                            appendImage(data.imageUrl);
+                        } else {
+                            appendMessage('Image generation error. Please try again with a different prompt.', false, true);
+                            console.error('API Error:', data);
+                        }
+                    })
+                    .catch(error => {
+                        messagesContainer.removeChild(typingIndicator);
+                        appendMessage('Failed to generate image. Please try again later.', false, true);
+                        console.error('Image Generation Error:', error);
+                    });
+                }
+            }
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendButton.click();
+            }
+        });
+
+        // Backup button event listeners
+        saveChatButton.addEventListener('click', saveChatToLocalStorage);
+        loadChatButton.addEventListener('click', loadChatFromLocalStorage);
+        clearChatButton.addEventListener('click', clearChat);
+    </script>
+</body>
+
+</html>
