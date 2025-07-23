@@ -114,6 +114,8 @@
             border-top: 1px solid #e0e0e0;
             position: sticky;
             bottom: 0;
+            align-items: center;
+            gap: 5px;
         }
         .input-field {
             flex-grow: 1;
@@ -122,9 +124,10 @@
             border: 1px solid #e0e0e0;
             outline: none;
             font-size: 16px;
+            min-width: 0;
         }
         .send-button {
-            margin-left: 10px;
+            margin-left: 0;
             padding: 12px 15px;
             background-color: #000000;
             border: none;
@@ -134,13 +137,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
         .select-type {
-            margin-right: 10px;
+            margin-right: 0;
             padding: 10px;
             border-radius: 5px;
             border: 1px solid #e0e0e0;
             background-color: white;
+            flex-shrink: 0;
+            width: auto;
         }
         .generated-image {
             max-width: 100%;
@@ -277,6 +283,56 @@
             margin-top: 10px;
             cursor: pointer;
         }
+        .download-button {
+            display: inline-block;
+            background-color: #000000;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .download-button:hover {
+            background-color: #333333;
+        }
+        .video-preview {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 480px) {
+            .select-type {
+                padding: 8px;
+                font-size: 14px;
+            }
+            
+            .input-field {
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            .send-button {
+                padding: 10px 12px;
+            }
+            
+            .backup-buttons {
+                gap: 5px;
+            }
+            
+            .backup-button {
+                padding: 8px;
+                font-size: 12px;
+            }
+            
+            .download-button {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 
@@ -299,8 +355,9 @@
             <select id="request-type" class="select-type">
                 <option value="text">Text</option>
                 <option value="image">Image</option>
+                <option value="video">Video Download</option>
             </select>
-            <input type="text" id="message-input" class="input-field" placeholder="Type a message..." />
+            <input type="text" id="message-input" class="input-field" placeholder="Type a message or paste video URL..." />
             <button id="send-button" class="send-button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -356,7 +413,7 @@
         // Current chat ID
         let currentChatId = Date.now().toString();
 
-        function appendMessage(message, isUser = false, isError = false, isImage = false) {
+        function appendMessage(message, isUser = false, isError = false, isImage = false, isVideo = false) {
             const messageElement = document.createElement('div');
             messageElement.classList.add('message', isUser ? 'user-message' : 'bot-message');
             if (isError) {
@@ -369,6 +426,18 @@
                 imageElement.alt = 'Generated Image';
                 imageElement.classList.add('generated-image');
                 messageElement.appendChild(imageElement);
+            } else if (isVideo) {
+                // For video download links
+                const videoInfo = document.createElement('div');
+                videoInfo.innerHTML = `
+                    <p>Video download ready:</p>
+                    <video controls class="video-preview">
+                        <source src="${message}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <a href="${message}" class="download-button" download="video.mp4">Download Video</a>
+                `;
+                messageElement.appendChild(videoInfo);
             } else {
                 messageElement.textContent = message;
             }
@@ -382,6 +451,7 @@
                 isUser,
                 isError,
                 isImage,
+                isVideo,
                 timestamp: new Date().toISOString()
             });
             
@@ -391,6 +461,10 @@
 
         function appendImage(imageUrl) {
             appendMessage(imageUrl, false, false, true);
+        }
+
+        function appendVideo(videoUrl) {
+            appendMessage(videoUrl, false, false, false, true);
         }
 
         function showTypingIndicator() {
@@ -474,6 +548,8 @@
             chatData.messages.forEach(msg => {
                 if (msg.isImage) {
                     appendImage(msg.content);
+                } else if (msg.isVideo) {
+                    appendVideo(msg.content);
                 } else {
                     appendMessage(msg.content, msg.isUser, msg.isError);
                 }
@@ -548,6 +624,40 @@
             historyPanel.style.display = 'flex';
         }
 
+        // Function to validate video URLs
+        function isValidVideoUrl(url) {
+            try {
+                const parsedUrl = new URL(url);
+                // Check for common video file extensions
+                const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
+                return videoExtensions.some(ext => parsedUrl.pathname.toLowerCase().endsWith(ext));
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Function to download video from URL
+        function downloadVideoFromUrl(url) {
+            const typingIndicator = showTypingIndicator();
+            
+            // In a real implementation, you would need a server-side endpoint to handle the download
+            // This is a simplified client-side implementation that works for direct video URLs
+            
+            fetch(url, {
+                method: 'GET',
+                mode: 'no-cors' // Note: This has limitations
+            })
+            .then(() => {
+                messagesContainer.removeChild(typingIndicator);
+                appendVideo(url);
+            })
+            .catch(error => {
+                messagesContainer.removeChild(typingIndicator);
+                appendMessage('Failed to process video. Please try a different URL or check if the video is accessible.', false, true);
+                console.error('Video download error:', error);
+            });
+        }
+
         // Event listeners
         sendButton.addEventListener('click', () => {
             const userMessage = messageInput.value.trim();
@@ -608,6 +718,14 @@
                         appendMessage('Failed to generate image. Please try again later.', false, true);
                         console.error('Image Generation Error:', error);
                     });
+                } else if (requestType.value === 'video') {
+                    messagesContainer.removeChild(typingIndicator);
+                    
+                    if (isValidVideoUrl(userMessage)) {
+                        downloadVideoFromUrl(userMessage);
+                    } else {
+                        appendMessage('Please enter a valid video URL (must end with .mp4, .webm, .ogg, etc.)', false, true);
+                    }
                 }
             }
         });
@@ -632,6 +750,17 @@
         });
         closeHistoryButton.addEventListener('click', () => {
             historyPanel.style.display = 'none';
+        });
+
+        // Update input placeholder based on selected type
+        requestType.addEventListener('change', function() {
+            if (this.value === 'video') {
+                messageInput.placeholder = 'Paste video URL to download...';
+            } else if (this.value === 'image') {
+                messageInput.placeholder = 'Describe the image you want...';
+            } else {
+                messageInput.placeholder = 'Type a message...';
+            }
         });
     </script>
 </body>
