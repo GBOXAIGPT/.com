@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GBOX AI GPT - Advanced Chatbot</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.3/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            height: 100%;
+            width: 100%;
+            font-family: 'Poppins', sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            overflow: hidden;
+        }
+        .chat-window {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            position: relative;
+        }
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            background-color: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-right {
+            display: flex;
+            gap: 10px;
+        }
+        .header-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #000000;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .header-button:hover {
+            background-color: #f0f0f0;
+        }
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #000000 0%, #333333 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 10px;
+            text-align: center;
+            line-height: 1.1;
+            padding: 2px;
+        }
+        .chat-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #000000;
+        }
+        .messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        .message.user-message {
+            background-color: #000000;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 0;
+        }
+        .message.bot-message {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            margin-right: auto;
+            border-bottom-left-radius: 0;
+        }
+        .input-container {
+            display: flex;
+            padding: 10px;
+            background-color: #ffffff;
+            border-top: 1px solid #e0e0e0;
+            position: sticky;
+            bottom: 0;
+            align-items: center;
+            gap: 5px;
+        }
+        .input-field {
+            flex-grow: 1;
+            padding: 12px;
+            border-radius: 20px;
+            border: 1px solid #e0e0e0;
+            outline: none;
+            font-size: 16px;
+            min-width: 0;
+        }
+        .send-button {
+            margin-left: 0;
+            padding: 12px 15px;
+            background-color: #000000;
+            border: none;
+            border-radius: 50%;
+            color: #ffffff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .select-type {
+            margin-right: 0;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+            background-color: white;
+            flex-shrink: 0;
+            width: auto;
+        }
+        .generated-image {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+        .backup-buttons {
+            display: flex;
+            gap: 8px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-top: 1px solid #e0e0e0;
+        }
+        .backup-button {
+            flex: 1;
+            padding: 10px;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 14px;
+        }
+        .typing-indicator {
+            display: flex;
+            padding: 12px;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            max-width: 85%;
+            margin-right: auto;
+            margin-bottom: 10px;
+            border-bottom-left-radius: 0;
+        }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #000;
+            border-radius: 50%;
+            margin: 0 2px;
+            opacity: 0.4;
+        }
+        .typing-dot:nth-child(1) {
+            animation: typingAnimation 1s infinite;
+        }
+        .typing-dot:nth-child(2) {
+            animation: typingAnimation 1s infinite 0.2s;
+        }
+        .typing-dot:nth-child(3) {
+            animation: typingAnimation 1s infinite 0.4s;
+        }
+        @keyframes typingAnimation {
+            0%, 100% {
+                opacity: 0.4;
+                transform: translateY(0);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-5px);
+            }
+        }
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+        .history-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            color: white;
+            overflow-y: auto;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .history-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .close-history {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .history-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .history-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .history-item:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .history-item-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .history-item-preview {
+            font-size: 14px;
+            color: #ccc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .history-item-date {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        .new-chat-button {
+            background-color: #000000;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .download-button {
+            display: inline-block;
+            background-color: #000000;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .download-button:hover {
+            background-color: #333333;
+        }
+        .video-preview {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 480px) {
+            .select-type {
+                padding: 8px;
+                font-size: 14px;
+            }
+            
+            .input-field {
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            .send-button {
+                padding: 10px 12px;
+            }
+            
+            .backup-buttons {
+                gap: 5px;
+            }
+            
+            .backup-button {
+                padding: 8px;
+                font-size: 12px;
+            }
+            
+            .download-button {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chat-window">
+        <div class="chat-header">
+            <div class="header-left">
+                <div class="profile-pic">GBOX<br>AI<br>GPT</div>
+                <div class="chat-title">GBOX AI GPT</div>
+            </div>
+            <div class="header-right">
+                <button id="history-button" class="header-button">History</button>
+                <button id="new-chat-button" class="header-button">New Chat</button>
+            </div>
+        </div>
+        <div class="messages" id="messages">
+            <!-- Messages will appear here -->
+        </div>
+        <div class="input-container">
+            <select id="request-type" class="select-type">
+                <option value="text">Text</option>
+                <option value="image">Image</option>
+                <option value="video">Video Download</option>
+            </select>
+            <input type="text" id="message-input" class="input-field" placeholder="Type a message or paste video URL..." />
+            <button id="send-button" class="send-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+        <div class="backup-buttons">
+            <button id="save-chat" class="backup-button">Save</button>
+            <button id="load-chat" class="backup-button">Load</button>
+            <button id="clear-chat" class="backup-button">Clear</button>
+        </div>
+    </div>
+
+    <!-- History Panel -->
+    <div class="history-panel" id="history-panel">
+        <div class="history-header">
+            <div class="history-title">Chat History</div>
+            <button class="close-history" id="close-history">&times;</button>
+        </div>
+        <div class="history-list" id="history-list">
+            <!-- History items will appear here -->
+        </div>
+        <button class="new-chat-button" id="new-chat-from-history">Start New Chat</button>
+    </div>
+
+    <script>
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const requestType = document.getElementById('request-type');
+        const saveChatButton = document.getElementById('save-chat');
+        const loadChatButton = document.getElementById('load-chat');
+        const clearChatButton = document.getElementById('clear-chat');
+        const historyButton = document.getElementById('history-button');
+        const newChatButton = document.getElementById('new-chat-button');
+        const historyPanel = document.getElementById('history-panel');
+        const closeHistoryButton = document.getElementById('close-history');
+        const historyList = document.getElementById('history-list');
+        const newChatFromHistoryButton = document.getElementById('new-chat-from-history');
+
+        // Welcome message
+        window.onload = function() {
+            appendMessage("Hello! I'm GBOX AI GPT. How can I assist you today?");
+            // Try to load saved chat if exists
+            loadChatFromLocalStorage();
+        };
+
+        // Chat history array to store all messages
+        let chatHistory = [];
+        // Store all saved chats
+        let savedChats = JSON.parse(localStorage.getItem('gboxAiGptSavedChats') || '[]');
+        // Current chat ID
+        let currentChatId = Date.now().toString();
+
+        function appendMessage(message, isUser = false, isError = false, isImage = false, isVideo = false) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', isUser ? 'user-message' : 'bot-message');
+            if (isError) {
+                messageElement.classList.add('error-message');
+            }
+            
+            if (isImage) {
+                const imageElement = document.createElement('img');
+                imageElement.src = message;
+                imageElement.alt = 'Generated Image';
+                imageElement.classList.add('generated-image');
+                messageElement.appendChild(imageElement);
+            } else if (isVideo) {
+                // For video download links
+                const videoInfo = document.createElement('div');
+                videoInfo.innerHTML = `
+                    <p>Video download ready:</p>
+                    <video controls class="video-preview">
+                        <source src="${message}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <a href="${message}" class="download-button" download="video.mp4">Download Video</a>
+                `;
+                messageElement.appendChild(videoInfo);
+            } else {
+                messageElement.textContent = message;
+            }
+            
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Add to chat history
+            chatHistory.push({
+                content: message,
+                isUser,
+                isError,
+                isImage,
+                isVideo,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Update current chat in saved chats
+            updateCurrentChatInSavedChats();
+        }
+
+        function appendImage(imageUrl) {
+            appendMessage(imageUrl, false, false, true);
+        }
+
+        function appendVideo(videoUrl) {
+            appendMessage(videoUrl, false, false, false, true);
+        }
+
+        function showTypingIndicator() {
+            const typingElement = document.createElement('div');
+            typingElement.classList.add('typing-indicator');
+            
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('typing-dot');
+                typingElement.appendChild(dot);
+            }
+            
+            messagesContainer.appendChild(typingElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            return typingElement;
+        }
+
+        // Chat management functions
+        function updateCurrentChatInSavedChats() {
+            const existingChatIndex = savedChats.findIndex(chat => chat.id === currentChatId);
+            
+            if (chatHistory.length > 0) {
+                const chatData = {
+                    id: currentChatId,
+                    title: chatHistory[0].content.substring(0, 30) + (chatHistory[0].content.length > 30 ? '...' : ''),
+                    preview: chatHistory.length > 1 ? chatHistory[1].content.substring(0, 50) + (chatHistory[1].content.length > 50 ? '...' : '') : '',
+                    date: new Date().toISOString(),
+                    messages: [...chatHistory]
+                };
+                
+                if (existingChatIndex !== -1) {
+                    savedChats[existingChatIndex] = chatData;
+                } else {
+                    savedChats.push(chatData);
+                }
+                
+                localStorage.setItem('gboxAiGptSavedChats', JSON.stringify(savedChats));
+            }
+        }
+
+        function saveChatToLocalStorage() {
+            try {
+                updateCurrentChatInSavedChats();
+                appendMessage("Chat saved successfully!", false, false);
+                console.log("Chat saved to localStorage");
+            } catch (e) {
+                appendMessage("Failed to save chat. Your browser may not support this feature.", false, true);
+                console.error("Error saving chat:", e);
+            }
+        }
+
+        function loadChatFromLocalStorage() {
+            try {
+                // Try to load the last active chat
+                const lastChatId = localStorage.getItem('gboxAiGptLastActiveChat');
+                if (lastChatId) {
+                    const chatToLoad = savedChats.find(chat => chat.id === lastChatId);
+                    if (chatToLoad) {
+                        loadChat(chatToLoad);
+                        return;
+                    }
+                }
+                
+                // If no last active chat, load the most recent one
+                if (savedChats.length > 0) {
+                    loadChat(savedChats[savedChats.length - 1]);
+                }
+            } catch (e) {
+                appendMessage("Failed to load chat. The saved data may be corrupted.", false, true);
+                console.error("Error loading chat:", e);
+            }
+        }
+
+        function loadChat(chatData) {
+            // Clear current chat
+            messagesContainer.innerHTML = '';
+            chatHistory = [];
+            currentChatId = chatData.id;
+            
+            // Rebuild chat from saved data
+            chatData.messages.forEach(msg => {
+                if (msg.isImage) {
+                    appendImage(msg.content);
+                } else if (msg.isVideo) {
+                    appendVideo(msg.content);
+                } else {
+                    appendMessage(msg.content, msg.isUser, msg.isError);
+                }
+            });
+            
+            // Set as last active chat
+            localStorage.setItem('gboxAiGptLastActiveChat', chatData.id);
+            
+            appendMessage("Chat loaded successfully!", false, false);
+            console.log("Chat loaded from localStorage");
+        }
+
+        function clearChat() {
+            if (confirm("Are you sure you want to clear the chat history?")) {
+                messagesContainer.innerHTML = '';
+                chatHistory = [];
+                currentChatId = Date.now().toString();
+                appendMessage("Chat cleared. How can I assist you today?", false, false);
+                
+                // Update saved chats
+                updateCurrentChatInSavedChats();
+            }
+        }
+
+        function startNewChat() {
+            if (chatHistory.length > 0 && !confirm("Starting a new chat will save the current one. Continue?")) {
+                return;
+            }
+            
+            // Save current chat if it has messages
+            if (chatHistory.length > 0) {
+                updateCurrentChatInSavedChats();
+            }
+            
+            // Clear and start new chat
+            messagesContainer.innerHTML = '';
+            chatHistory = [];
+            currentChatId = Date.now().toString();
+            appendMessage("Hello! I'm GBOX AI GPT. How can I assist you today?", false, false);
+            
+            // Set as last active chat
+            localStorage.setItem('gboxAiGptLastActiveChat', currentChatId);
+        }
+
+        function showHistoryPanel() {
+            historyList.innerHTML = '';
+            
+            // Sort chats by date (newest first)
+            const sortedChats = [...savedChats].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (sortedChats.length === 0) {
+                historyList.innerHTML = '<div style="padding: 20px; text-align: center;">No saved chats yet</div>';
+            } else {
+                sortedChats.forEach(chat => {
+                    const historyItem = document.createElement('div');
+                    historyItem.classList.add('history-item');
+                    historyItem.innerHTML = `
+                        <div class="history-item-title">${chat.title}</div>
+                        <div class="history-item-preview">${chat.preview}</div>
+                        <div class="history-item-date">${new Date(chat.date).toLocaleString()}</div>
+                    `;
+                    
+                    historyItem.addEventListener('click', () => {
+                        loadChat(chat);
+                        historyPanel.style.display = 'none';
+                    });
+                    
+                    historyList.appendChild(historyItem);
+                });
+            }
+            
+            historyPanel.style.display = 'flex';
+        }
+
+        // Function to validate video URLs
+        function isValidVideoUrl(url) {
+            try {
+                const parsedUrl = new URL(url);
+                // Check for common video file extensions
+                const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
+                return videoExtensions.some(ext => parsedUrl.pathname.toLowerCase().endsWith(ext));
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Function to download video from URL
+        function downloadVideoFromUrl(url) {
+            const typingIndicator = showTypingIndicator();
+            
+            // In a real implementation, you would need a server-side endpoint to handle the download
+            // This is a simplified client-side implementation that works for direct video URLs
+            
+            fetch(url, {
+                method: 'GET',
+                mode: 'no-cors' // Note: This has limitations
+            })
+            .then(() => {
+                messagesContainer.removeChild(typingIndicator);
+                appendVideo(url);
+            })
+            .catch(error => {
+                messagesContainer.removeChild(typingIndicator);
+                appendMessage('Failed to process video. Please try a different URL or check if the video is accessible.', false, true);
+                console.error('Video download error:', error);
+            });
+        }
+
+        // Event listeners
+        sendButton.addEventListener('click', () => {
+            const userMessage = messageInput.value.trim();
+            if (userMessage) {
+                appendMessage(userMessage, true);
+                messageInput.value = '';
+
+                const typingIndicator = showTypingIndicator();
+                const payload = { prompt: userMessage };
+
+                if (requestType.value === 'text') {
+                    fetch("https://backend.buildpicoapps.com/aero/run/llm-api?pk=v1-Z0FBQUFBQm9lOEdKX3pVLU1rQmE2VUNWVTVNM2MzTmY5eTZPclhFNTlGbFJmdklPTk05OWx5RzN4MmtaN0JxQmdUdGUxLUJZWTdQRFdaNXNiYmFfTWo0S2dINUxpSndkbXc9PQ==", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        messagesContainer.removeChild(typingIndicator);
+                        if (data.status === 'success') {
+                            appendMessage(data.text);
+                        } else {
+                            appendMessage('AI response error. Please try again later.', false, true);
+                            console.error('API Error:', data);
+                        }
+                    })
+                    .catch(error => {
+                        messagesContainer.removeChild(typingIndicator);
+                        appendMessage('Network Error. Please try again later.', false, true);
+                        console.error('Network Error:', error);
+                    });
+                } else if (requestType.value === 'image') {
+                    fetch("https://backend.buildpicoapps.com/aero/run/image-generation-api?pk=v1-Z0FBQUFBQm9lOEcwWG5EYWFpMEExbl9zLWxGY2FlMTdnOUFzZU56aFpuWHp6b2lpak9LX0Q4UFpXVUJuenhhcmd0dGNpXzRhaUE1ekVRbzZBTnJaY08zWm1fQktUNTBHLUE9PQ==", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            prompt: userMessage,
+                            size: "512x512"
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        messagesContainer.removeChild(typingIndicator);
+                        if (data.status === 'success' && data.imageUrl) {
+                            appendImage(data.imageUrl);
+                        } else {
+                            appendMessage('Image generation error. Please try again with a different prompt.', false, true);
+                            console.error('API Error:', data);
+                        }
+                    })
+                    .catch(error => {
+                        messagesContainer.removeChild(typingIndicator);
+                        appendMessage('Failed to generate image. Please try again later.', false, true);
+                        console.error('Image Generation Error:', error);
+                    });
+                } else if (requestType.value === 'video') {
+                    messagesContainer.removeChild(typingIndicator);
+                    
+                    if (isValidVideoUrl(userMessage)) {
+                        downloadVideoFromUrl(userMessage);
+                    } else {
+                        appendMessage('Please enter a valid video URL (must end with .mp4, .webm, .ogg, etc.)', false, true);
+                    }
+                }
+            }
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendButton.click();
+            }
+        });
+
+        // Backup button event listeners
+        saveChatButton.addEventListener('click', saveChatToLocalStorage);
+        loadChatButton.addEventListener('click', loadChatFromLocalStorage);
+        clearChatButton.addEventListener('click', clearChat);
+        
+        // History and new chat buttons
+        historyButton.addEventListener('click', showHistoryPanel);
+        newChatButton.addEventListener('click', startNewChat);
+        newChatFromHistoryButton.addEventListener('click', () => {
+            startNewChat();
+            historyPanel.style.display = 'none';
+        });
+        closeHistoryButton.addEventListener('click', () => {
+            historyPanel.style.display = 'none';
+        });
+
+        // Update input placeholder based on selected type
+        requestType.addEventListener('change', function() {
+            if (this.value === 'video') {
+                messageInput.placeholder = 'Paste video URL to download...';
+            } else if (this.value === 'image') {
+                messageInput.placeholder = 'Describe the image you want...';
+            } else {
+                messageInput.placeholder = 'Type a message...';
+            }
+        });
+    </script>
+</body>
+
+</html>
